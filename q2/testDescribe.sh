@@ -9,7 +9,7 @@ fi
 for stem in $(cat $1); do  
     echo "Description for the test case ${stem}:"
     if [ ! -e "${stem}.desc" ]; then
-        echo "${stem}: No test description\n"
+        echo "${stem}: No test description"
     fi
     echo $(cat ${stem}.desc)
 done
