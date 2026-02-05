@@ -1,5 +1,5 @@
 #!/bin/bash
-for stem in $(cat $1); do
+for stem in $(cat $2); do
     tempFile=$(mktemp)
     
     $1 < ${stem}.in > ${tempFile} #storing the wc for the stem.in file in tempFile
