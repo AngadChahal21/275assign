@@ -15,6 +15,7 @@ for stem in $(cat $1); do
         cat ${stem}.out
         echo "Actual output:"
         cat $tempFile
+    fi
     
     rm $tempFile
 
