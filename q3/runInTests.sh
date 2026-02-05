@@ -3,7 +3,7 @@ for stem in $(cat $2); do
     tempFile=$(mktemp)
     
     $1 < ${stem}.in > ${tempFile} #storing the wc for the stem.in file in tempFile
-    diff ${tempFile} ${stem}.out
+    diff ${tempFile} ${stem}.out > /dev/null
 
     result=$?
     if [ $result -eq 0 ]; then
