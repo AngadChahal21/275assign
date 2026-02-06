@@ -1,28 +1,26 @@
 #!/bin/bash
-if [ ${args} -eq 0 ]; then
-    echo "Usage:No arguments were given"
-    exit 1 
-fi 
 
-for stem in $(cat $2); do
-    tempFile=$(mktemp)
-    
-    $1 < ${stem}.in > ${tempFile} #storing the wc for the stem.in file in tempFile
-    diff ${tempFile} ${stem}.out > /dev/null
+if [[ "$#" -ne 2 ]]; then
+    echo "./runInTests commandToTest testSetFile" >&2
+    exit 1
+fi
 
-    result=$?
-    if [ $result -eq 0 ]; then
-        echo "test ${stem} passed"
-    fi
-    if [ $result -eq 1 ]; then
+command="$1"
+testset="$2"
+
+for stem in $(cat "$testset"); do
+    tmpfile=$(mktemp)
+    $command < "${stem}.in" > "$tmpfile"
+    diff "$tmpfile" "${stem}.out" > /dev/null
+    if [[ $? -eq 0 ]]; then
+        echo "Test ${stem} passed"
+    else
         echo "Test ${stem} failed"
         echo "Expected output:"
-        cat ${stem}.out
+        cat "${stem}.out"
         echo "Actual output:"
-        cat $tempFile
+        cat "$tmpfile"
     fi
-    
-    rm $tempFile
-
+    rm "$tmpfile"
 done
 
