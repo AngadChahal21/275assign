@@ -1,4 +1,9 @@
 #!/bin/bash
+if [ ${args} -eq 0 ]; then
+    echo "Usage:No arguments were given"
+    exit 1 
+fi 
+
 for stem in $(cat $2); do
     tempFile=$(mktemp)
     
