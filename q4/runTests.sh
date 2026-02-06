@@ -1,6 +1,6 @@
 #!/bin/bash
 if [ ${args} -eq 0 ]; then
-    echo "Usage:No arguments were given"
+    echo "Usage:No arguments were given" >&2
     exit 1 
 fi 
 

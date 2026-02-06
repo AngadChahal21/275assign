@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-int main(){
+int main(void){
     int len = 0;
     int oddLenSum = 0;
     int evenLenSum = 0;
@@ -12,7 +12,7 @@ int main(){
     int c;
     int digit;
 
-    while ((c = getchar()) >= '0' && c <= '9'){
+    while ((c = getchar()) >= '0' && c <= '9' && c!=-1){
         digit = c - '0';
 
         if (prev >= 0){
@@ -22,7 +22,7 @@ int main(){
             }
         
 
-            if (len%2 == 1){
+            if (len%2 == 0){
                 oddLenSum += doubled;
                 evenLenSum += prev;
             }
