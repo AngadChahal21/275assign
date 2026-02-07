@@ -1,6 +1,6 @@
 #!/bin/bash
 args=$#
-if [ ${args} -ne 0 ]; then
+if [ ${args} -ne 2 ]; then
     echo "Usage: ./runTests commandToTest testSetFile" >&2
     exit 1 
 fi 
