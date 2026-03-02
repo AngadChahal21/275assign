@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-
 unsigned int str_to_uint(char *s) {
   unsigned int result = 0;
   int i = 0;
@@ -15,7 +13,45 @@ unsigned int str_to_uint(char *s) {
   return result;
 }
 
+int startsWithInteger(char *str) {
+    int i = 0;
+
+    // Optional sign
+    if (str[i] == '+' || str[i] == '-') {
+        i++;
+    }
+
+    // Must have at least one digit
+    if (str[i] < '0' || str[i] > '9') {
+        return 0;   // false
+    }
+
+    return 1;       // true
+  }
+
 int main(int argc, char *argv[]) {
+
+  
+  if (argc != 4) {
+    fprintf(stderr, "Usage: ./hamming_sample n1 n2 base\n");
+    return 1;
+  }
+
+
+    if (!startsWithInteger(argv[1])) {
+        fprintf(stderr, "First argument must be an integer\n");
+        return 1;
+    }
+
+    if (!startsWithInteger(argv[2])) {
+        fprintf(stderr, "Second argument must be an integer\n");
+        return 1;
+    }
+
+    if (!startsWithInteger(argv[3])) {
+        fprintf(stderr, "Third argument must be an integer\n");
+        return 1;
+    }
 
   unsigned int num1 = str_to_uint(argv[1]);
   unsigned int num2 = str_to_uint(argv[2]);
