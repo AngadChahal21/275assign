@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+
 unsigned int str_to_uint(char *s) {
   unsigned int result = 0;
   int i = 0;
