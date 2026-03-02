@@ -31,6 +31,7 @@ int startsWithInteger(char *str) {
 
 int main(int argc, char *argv[]) {
 
+    int error = 0;
   
   if (argc != 4) {
     fprintf(stderr, "Usage: ./hamming_sample n1 n2 base\n");
@@ -40,16 +41,20 @@ int main(int argc, char *argv[]) {
 
     if (!startsWithInteger(argv[1])) {
         fprintf(stderr, "First argument must be an integer\n");
-        return 1;
+        error = 1;
     }
 
     if (!startsWithInteger(argv[2])) {
         fprintf(stderr, "Second argument must be an integer\n");
-        return 1;
+        error = 1;
     }
 
     if (!startsWithInteger(argv[3])) {
         fprintf(stderr, "Third argument must be an integer\n");
+        error = 1;
+    }
+
+    if(error){
         return 1;
     }
 
