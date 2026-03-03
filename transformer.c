@@ -1,137 +1,137 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct Pixel {
-  int r;
-  int g;
-  int b;
+struct RGBData {
+  int red_val;
+  int green_val;
+  int blue_val;
 };
 
 /* Read image from stdin */
-struct Pixel *read_image(int *width, int *height) {
-  char format[3];
+struct RGBData *import_ppm(int *w_ptr, int *h_ptr) {
+  char magic_number[3];
 
-  if (scanf("%2s", format) != 1) {
+  if (scanf("%2s", magic_number) != 1) {
     return NULL;
   }
 
-  if (format[0] != 'P' || format[1] != '3') {
+  if (magic_number[0] != 'P' || magic_number[1] != '3') {
     return NULL;
   }
 
-  if (scanf("%d %d", width, height) != 2) {
+  if (scanf("%d %d", w_ptr, h_ptr) != 2) {
     return NULL;
   }
 
-  int max;
-  if (scanf("%d", &max) != 1) {
+  int scale_max;
+  if (scanf("%d", &scale_max) != 1) {
     return NULL;
   }
 
-  struct Pixel *image = malloc((*width) * (*height) * sizeof(struct Pixel));
-  if (image == NULL) {
+  struct RGBData *pixel_grid = malloc((*w_ptr) * (*h_ptr) * sizeof(struct RGBData));
+  if (pixel_grid == NULL) {
     return NULL;
   }
 
-  for (int i = 0; i < (*width) * (*height); i++) {
-    if (scanf("%d %d %d", &image[i].r, &image[i].g, &image[i].b) != 3) {
-      free(image);
+  for (int idx = 0; idx < (*w_ptr) * (*h_ptr); idx++) {
+    if (scanf("%d %d %d", &pixel_grid[idx].red_val, &pixel_grid[idx].green_val, &pixel_grid[idx].blue_val) != 3) {
+      free(pixel_grid);
       return NULL;
     }
   }
 
-  return image;
+  return pixel_grid;
 }
 
 /* Apply sepia filter */
-void apply_sepia(struct Pixel *image, int width, int height) {
-  int total = width * height;
+void tint_sepia(struct RGBData *buffer, int cols, int rows) {
+  int pixel_count = cols * rows;
 
-  for (int i = 0; i < total; i++) {
-    int r = image[i].r;
-    int g = image[i].g;
-    int b = image[i].b;
+  for (int i = 0; i < pixel_count; i++) {
+    int oldR = buffer[i].red_val;
+    int oldG = buffer[i].green_val;
+    int oldB = buffer[i].blue_val;
 
-    int newR = (int)(r * 0.393 + g * 0.769 + b * 0.189);
-    int newG = (int)(r * 0.349 + g * 0.686 + b * 0.168);
-    int newB = (int)(r * 0.272 + g * 0.534 + b * 0.131);
+    int filteredR = (int)(oldR * 0.393 + oldG * 0.769 + oldB * 0.189);
+    int filteredG = (int)(oldR * 0.349 + oldG * 0.686 + oldB * 0.168);
+    int filteredB = (int)(oldR * 0.272 + oldG * 0.534 + oldB * 0.131);
 
-    if (newR > 255)
-      newR = 255;
-    if (newG > 255)
-      newG = 255;
-    if (newB > 255)
-      newB = 255;
+    if (filteredR > 255)
+      filteredR = 255;
+    if (filteredG > 255)
+      filteredG = 255;
+    if (filteredB > 255)
+      filteredB = 255;
 
-    image[i].r = newR;
-    image[i].g = newG;
-    image[i].b = newB;
+    buffer[i].red_val = filteredR;
+    buffer[i].green_val = filteredG;
+    buffer[i].blue_val = filteredB;
   }
 }
 
 /* Flip image horizontally */
-void flip_image(struct Pixel *image, int width, int height) {
-  for (int row = 0; row < height; row++) {
-    for (int col = 0; col < width / 2; col++) {
+void mirror_horizontal(struct RGBData *canvas, int width, int height) {
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width / 2; x++) {
 
-      int left_index = row * width + col;
-      int right_index = row * width + (width - 1 - col);
+      int pos_start = y * width + x;
+      int pos_end = y * width + (width - 1 - x);
 
-      struct Pixel temp = image[left_index];
-      image[left_index] = image[right_index];
-      image[right_index] = temp;
+      struct RGBData swap_holder = canvas[pos_start];
+      canvas[pos_start] = canvas[pos_end];
+      canvas[pos_end] = swap_holder;
     }
   }
 }
 
 /* Print image */
-void print_image(struct Pixel *image, int width, int height) {
+void export_ppm(struct RGBData *output, int out_w, int out_h) {
   printf("P3\n");
-  printf("%d %d\n", width, height);
+  printf("%d %d\n", out_w, out_h);
   printf("255\n");
 
-  for (int row = 0; row < height; row++) {
-    for (int col = 0; col < width; col++) {
-      int index = row * width + col;
-      if (col > 0)
+  for (int y = 0; y < out_h; y++) {
+    for (int x = 0; x < out_w; x++) {
+      int cursor = y * out_w + x;
+      if (x > 0)
         printf(" ");
-      printf("%d %d %d", image[index].r, image[index].g, image[index].b);
+      printf("%d %d %d", output[cursor].red_val, output[cursor].green_val, output[cursor].blue_val);
     }
     printf(" \n");
   }
 }
 
-int main(int argc, char *argv[]) {
+int main(int argument_count, char *argument_vector[]) {
 
-  int flip = 0;
-  int sepia = 0;
+  int do_mirror = 0;
+  int do_sepia = 0;
 
-  for (int i = 1; i < argc; i++) {
-    if (argv[i][0] == '-' && argv[i][1] == 'f') {
-      flip = 1;
-    } else if (argv[i][0] == '-' && argv[i][1] == 's') {
-      sepia = 1;
+  for (int k = 1; k < argument_count; k++) {
+    if (argument_vector[k][0] == '-' && argument_vector[k][1] == 'f') {
+      do_mirror = 1;
+    } else if (argument_vector[k][0] == '-' && argument_vector[k][1] == 's') {
+      do_sepia = 1;
     }
   }
 
-  int width, height;
-  struct Pixel *image = read_image(&width, &height);
+  int img_w, img_h;
+  struct RGBData *img_data = import_ppm(&img_w, &img_h);
 
-  if (image == NULL) {
+  if (img_data == NULL) {
     return 1;
   }
 
-  if (sepia) {
-    apply_sepia(image, width, height);
+  if (do_sepia) {
+    tint_sepia(img_data, img_w, img_h);
   }
 
-  if (flip) {
-    flip_image(image, width, height);
+  if (do_mirror) {
+    mirror_horizontal(img_data, img_w, img_h);
   }
 
-  print_image(image, width, height);
+  export_ppm(img_data, img_w, img_h);
 
-  free(image);
+  free(img_data);
 
   return 0;
 }
