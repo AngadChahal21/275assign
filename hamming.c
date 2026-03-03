@@ -1,94 +1,91 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-unsigned int str_to_uint(char *s) {
-  unsigned int result = 0;
-  int i = 0;
+unsigned int convert_to_unsigned(char *input_ptr) {
+  unsigned int total_val = 0;
+  int cursor = 0;
 
-  while (s[i] != '\0') {
-    result = result * 10 + (s[i] - '0');
-    i++;
+  while (input_ptr[cursor] != '\0') {
+    total_val = total_val * 10 + (input_ptr[cursor] - '0');
+    cursor++;
   }
 
-  return result;
+  return total_val;
 }
 
-int startsWithInteger(char *str) {
-    int i = 0;
+int begins_with_digit(char *buffer) {
+    int idx = 0;
 
     // Optional sign
-    if (str[i] == '+' || str[i] == '-') {
-        i++;
+    if (buffer[idx] == '+' || buffer[idx] == '-') {
+        idx++;
     }
 
     // Must have at least one digit
-    if (str[i] < '0' || str[i] > '9') {
+    if (buffer[idx] < '0' || buffer[idx] > '9') {
         return 0;   // false
     }
 
     return 1;       // true
   }
 
-int main(int argc, char *argv[]) {
+int main(int arg_count, char *arg_values[]) {
 
-    int error = 0;
+    int failure_flag = 0;
   
-  if (argc != 4) {
+  if (arg_count != 4) {
     fprintf(stderr, "Usage: ./hamming_sample n1 n2 base\n");
     return 1;
   }
 
 
-    if (!startsWithInteger(argv[1])) {
+    if (!begins_with_digit(arg_values[1])) {
         fprintf(stderr, "First argument must be an integer\n");
-        error = 1;
+        failure_flag = 1;
     }
 
-    if (!startsWithInteger(argv[2])) {
+    if (!begins_with_digit(arg_values[2])) {
         fprintf(stderr, "Second argument must be an integer\n");
-        error = 1;
+        failure_flag = 1;
     }
 
-    if (!startsWithInteger(argv[3])) {
+    if (!begins_with_digit(arg_values[3])) {
         fprintf(stderr, "Third argument must be an integer\n");
-        error = 1;
+        failure_flag = 1;
     }
 
-    if(error){
+    if(failure_flag){
         return 1;
     }
 
-  unsigned int num1 = str_to_uint(argv[1]);
-  unsigned int num2 = str_to_uint(argv[2]);
-  unsigned int base = str_to_uint(argv[3]);
+  unsigned int first_val = convert_to_unsigned(arg_values[1]);
+  unsigned int second_val = convert_to_unsigned(arg_values[2]);
+  unsigned int radix_base = convert_to_unsigned(arg_values[3]);
 
-  unsigned int distance = 0;
+  unsigned int diff_count = 0;
 
-  /* Track whether each number still has digits remaining.
-   * A missing digit (absence) always differs from any value,
-   * even 0. We can't just compare remainders because
-   * 0 % base == 0 which would falsely match a real 0 digit. */
-  int has_digits1 = (num1 > 0);
-  int has_digits2 = (num2 > 0);
+  
+  int active_1 = (first_val > 0);
+  int active_2 = (second_val > 0);
 
-  while (has_digits1 || has_digits2) {
-    unsigned int digit1 = num1 % base;
-    unsigned int digit2 = num2 % base;
+  while (active_1 || active_2) {
+    unsigned int remainder_1 = first_val % radix_base;
+    unsigned int remainder_2 = second_val % radix_base;
 
-    if (has_digits1 != has_digits2) {
+    if (active_1 != active_2) {
       /* One number has a digit here, the other doesn't — always differs */
-      distance++;
-    } else if (digit1 != digit2) {
-      distance++;
+      diff_count++;
+    } else if (remainder_1 != remainder_2) {
+      diff_count++;
     }
 
-    num1 = num1 / base;
-    num2 = num2 / base;
-    has_digits1 = (num1 > 0);
-    has_digits2 = (num2 > 0);
+    first_val = first_val / radix_base;
+    second_val = second_val / radix_base;
+    active_1 = (first_val > 0);
+    active_2 = (second_val > 0);
   }
 
-  printf("%u\n", distance);
+  printf("%u\n", diff_count);
 
   return 0;
 }
