@@ -1,293 +1,192 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct SString {
-  char *data;
-  unsigned int size;
-  unsigned int capacity;
+struct DynamicString {
+  char *text_ptr;
+  unsigned int length;
+  unsigned int max_size;
 };
 
-void init(struct SString *s) {
-  s->capacity = 4;
-  s->size = 0;
-  s->data = malloc(4);
+void setup_str(struct DynamicString *ds) {
+  ds->max_size = 4;
+  ds->length = 0;
+  ds->text_ptr = malloc(4);
 }
 
-void free_sstring(struct SString *s) { free(s->data); }
+void release_str(struct DynamicString *ds) { 
+  free(ds->text_ptr); 
+}
 
-void append_char(struct SString *s, char c) {
+void add_item(struct DynamicString *ds, char symbol) {
+  if (ds->length == ds->max_size) {
+    ds->max_size *= 2;
+    char *resized_area = malloc(ds->max_size);
 
-  if (s->size == s->capacity) {
-
-    s->capacity *= 2;
-    char *new_data = malloc(s->capacity);
-
-    for (unsigned int i = 0; i < s->size; i++) {
-      new_data[i] = s->data[i];
+    for (unsigned int k = 0; k < ds->length; k++) {
+      resized_area[k] = ds->text_ptr[k];
     }
 
-    free(s->data);
-    s->data = new_data;
+    free(ds->text_ptr);
+    ds->text_ptr = resized_area;
   }
 
-  s->data[s->size] = c;
-  s->size++;
+  ds->text_ptr[ds->length] = symbol;
+  ds->length++;
 }
 
-void clear(struct SString *s) { s->size = 0; }
+void wipe_str(struct DynamicString *ds) { 
+  ds->length = 0; 
+}
 
-void print_sstring(struct SString *s) {
-  for (unsigned int i = 0; i < s->size; i++) {
-    printf("%c", s->data[i]);
+/* Updated to print just the raw string content */
+void display_str(struct DynamicString *ds) {
+  for (unsigned int k = 0; k < ds->length; k++) {
+    printf("%c", ds->text_ptr[k]);
   }
   printf("\n");
 }
 
-void details(struct SString *s) {
-
-  printf("\"");
-
-  for (unsigned int i = 0; i < s->size; i++) {
-    printf("%c", s->data[i]);
+/* Updated to match your specific multi-line requirement */
+void show_info(struct DynamicString *ds) {
+  printf("String: \"");
+  for (unsigned int k = 0; k < ds->length; k++) {
+    printf("%c", ds->text_ptr[k]);
   }
-
-  printf("\" size: %u capacity: %u\n", s->size, s->capacity);
+  printf("\"\n");
+  printf("Length: %u\n", ds->length);
+  printf("Capacity: %u\n", ds->max_size);
 }
 
-void copy(struct SString *dest, struct SString *src) {
-
-  clear(dest);
-
-  for (unsigned int i = 0; i < src->size; i++) {
-    append_char(dest, src->data[i]);
-  }
-}
-
-void concat(struct SString *dest, struct SString *s1, struct SString *s2) {
-
-  /* Use a temp to handle aliasing (e.g. c a a b where dest == s1) */
-  struct SString temp;
-  init(&temp);
-
-  for (unsigned int i = 0; i < s1->size; i++) {
-    append_char(&temp, s1->data[i]);
-  }
-
-  for (unsigned int i = 0; i < s2->size; i++) {
-    append_char(&temp, s2->data[i]);
-  }
-
-  free(dest->data);
-  dest->data = temp.data;
-  dest->size = temp.size;
-  dest->capacity = temp.capacity;
-}
-
-void read_word(struct SString *s) {
-
-  clear(s);
-
-  int c;
-
-  /* Skip leading whitespace to get to actual word */
-  while ((c = getchar()) != EOF) {
-    if (c != ' ' && c != '\n' && c != '\t' && c != '\r') {
-      append_char(s, c);
-      break;
-    }
-  }
-
-  /* Read until whitespace or EOF */
-  while ((c = getchar()) != EOF) {
-    if (c == ' ' || c == '\n' || c == '\t' || c == '\r') {
-      break;
-    }
-    append_char(s, c);
+void replicate(struct DynamicString *target, struct DynamicString *origin) {
+  wipe_str(target);
+  for (unsigned int k = 0; k < origin->length; k++) {
+    add_item(target, origin->text_ptr[k]);
   }
 }
 
-void read_quoted(struct SString *s) {
+void join_str(struct DynamicString *out, struct DynamicString *p1, struct DynamicString *p2) {
+  struct DynamicString buffer;
+  setup_str(&buffer);
 
-  clear(s);
-
-  int c;
-
-  /* Skip until we find the opening quote */
-  while ((c = getchar()) != EOF) {
-    if (c == '"') {
-      break;
-    }
+  for (unsigned int k = 0; k < p1->length; k++) {
+    add_item(&buffer, p1->text_ptr[k]);
   }
 
-  /* Read until closing quote or EOF */
-  while ((c = getchar()) != EOF) {
-    if (c == '"') {
-      break;
-    }
-    append_char(s, c);
+  for (unsigned int k = 0; k < p2->length; k++) {
+    add_item(&buffer, p2->text_ptr[k]);
   }
+
+  free(out->text_ptr);
+  out->text_ptr = buffer.text_ptr;
+  out->length = buffer.length;
+  out->max_size = buffer.max_size;
 }
 
 int main() {
+  struct DynamicString str_a, str_b, str_c, str_d;
 
-  struct SString a, b, c, d;
+  setup_str(&str_a);
+  setup_str(&str_b);
+  setup_str(&str_c);
+  setup_str(&str_d);
 
-  init(&a);
-  init(&b);
-  init(&c);
-  init(&d);
-
-  char command;
+  char op_code;
 
   while (1) {
-
-    if (scanf(" %c", &command) != 1) {
+    if (scanf(" %c", &op_code) != 1) {
       break;
     }
 
-    if (command == 'q') {
+    if (op_code == 'q') {
       break;
     }
 
-    if (command == 'r' || command == 'a') {
+    if (op_code == 'r' || op_code == 'a') {
+      char target_id;
+      scanf(" %c", &target_id);
 
-      char target;
-      scanf(" %c", &target);
+      struct DynamicString *active_ptr;
 
-      struct SString *s;
+      if (target_id == 'a') active_ptr = &str_a;
+      else if (target_id == 'b') active_ptr = &str_b;
+      else if (target_id == 'c') active_ptr = &str_c;
+      else active_ptr = &str_d;
 
-      if (target == 'a')
-        s = &a;
-      else if (target == 'b')
-        s = &b;
-      else if (target == 'c')
-        s = &c;
-      else
-        s = &d;
-
-      /* Skip whitespace, then check if next char is a quote */
-      int next;
-      while ((next = getchar()) != EOF) {
-        if (next != ' ' && next != '\t' && next != '\n' && next != '\r') {
+      int lookahead;
+      while ((lookahead = getchar()) != EOF) {
+        if (lookahead != ' ' && lookahead != '\t' && lookahead != '\n' && lookahead != '\r') {
           break;
         }
       }
 
-      if (next == '"') {
-        /* Quoted string — read_quoted will read until closing " */
-        if (command == 'r') {
-          clear(s);
-          int ch;
-          while ((ch = getchar()) != EOF) {
-            if (ch == '"')
-              break;
-            append_char(s, ch);
-          }
-        } else {
-          int ch;
-          while ((ch = getchar()) != EOF) {
-            if (ch == '"')
-              break;
-            append_char(s, ch);
-          }
+      if (lookahead == '"') {
+        if (op_code == 'r') wipe_str(active_ptr);
+        int stream_char;
+        while ((stream_char = getchar()) != EOF) {
+          if (stream_char == '"') break;
+          add_item(active_ptr, stream_char);
         }
-      } else {
-        /* Unquoted word — first non-whitespace char is 'next' */
-        if (next != EOF) {
-          if (command == 'r') {
-            clear(s);
-            append_char(s, next);
-            int ch;
-            while ((ch = getchar()) != EOF) {
-              if (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r')
-                break;
-              append_char(s, ch);
-            }
-          } else {
-            append_char(s, next);
-            int ch;
-            while ((ch = getchar()) != EOF) {
-              if (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r')
-                break;
-              append_char(s, ch);
-            }
-          }
+      } else if (lookahead != EOF) {
+        if (op_code == 'r') wipe_str(active_ptr);
+        add_item(active_ptr, lookahead);
+        int stream_char;
+        while ((stream_char = getchar()) != EOF) {
+          if (stream_char == ' ' || stream_char == '\t' || stream_char == '\n' || stream_char == '\r')
+            break;
+          add_item(active_ptr, stream_char);
         }
       }
     }
 
-    else if (command == 'p') {
+    else if (op_code == 'p') {
+      char target_id;
+      scanf(" %c", &target_id);
 
-      char target;
-      scanf(" %c", &target);
-
-      if (target == 'a')
-        print_sstring(&a);
-      else if (target == 'b')
-        print_sstring(&b);
-      else if (target == 'c')
-        print_sstring(&c);
-      else
-        print_sstring(&d);
+      if (target_id == 'a') display_str(&str_a);
+      else if (target_id == 'b') display_str(&str_b);
+      else if (target_id == 'c') display_str(&str_c);
+      else display_str(&str_d);
     }
 
-    else if (command == 'd') {
+    else if (op_code == 'd') {
+      char target_id;
+      scanf(" %c", &target_id);
 
-      char target;
-      scanf(" %c", &target);
-
-      if (target == 'a')
-        details(&a);
-      else if (target == 'b')
-        details(&b);
-      else if (target == 'c')
-        details(&c);
-      else
-        details(&d);
+      if (target_id == 'a') show_info(&str_a);
+      else if (target_id == 'b') show_info(&str_b);
+      else if (target_id == 'c') show_info(&str_c);
+      else show_info(&str_d);
     }
 
-    else if (command == 'c') {
+    else if (op_code == 'c') {
+      char id1, id2, id3;
+      scanf(" %c %c %c", &id1, &id2, &id3);
 
-      char t1, t2, t3;
-      scanf(" %c %c %c", &t1, &t2, &t3);
+      struct DynamicString *out_ptr, *src1, *src2;
 
-      struct SString *dest, *s1, *s2;
+      if (id1 == 'a') out_ptr = &str_a;
+      else if (id1 == 'b') out_ptr = &str_b;
+      else if (id1 == 'c') out_ptr = &str_c;
+      else out_ptr = &str_d;
 
-      if (t1 == 'a')
-        dest = &a;
-      else if (t1 == 'b')
-        dest = &b;
-      else if (t1 == 'c')
-        dest = &c;
-      else
-        dest = &d;
+      if (id2 == 'a') src1 = &str_a;
+      else if (id2 == 'b') src1 = &str_b;
+      else if (id2 == 'c') src1 = &str_c;
+      else src1 = &str_d;
 
-      if (t2 == 'a')
-        s1 = &a;
-      else if (t2 == 'b')
-        s1 = &b;
-      else if (t2 == 'c')
-        s1 = &c;
-      else
-        s1 = &d;
+      if (id3 == 'a') src2 = &str_a;
+      else if (id3 == 'b') src2 = &str_b;
+      else if (id3 == 'c') src2 = &str_c;
+      else src2 = &str_d;
 
-      if (t3 == 'a')
-        s2 = &a;
-      else if (t3 == 'b')
-        s2 = &b;
-      else if (t3 == 'c')
-        s2 = &c;
-      else
-        s2 = &d;
-
-      concat(dest, s1, s2);
+      join_str(out_ptr, src1, src2);
     }
   }
 
-  free_sstring(&a);
-  free_sstring(&b);
-  free_sstring(&c);
-  free_sstring(&d);
+  release_str(&str_a);
+  release_str(&str_b);
+  release_str(&str_c);
+  release_str(&str_d);
 
   return 0;
 }
