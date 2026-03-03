@@ -1,192 +1,192 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct DynamicString {
-  char *text_ptr;
-  unsigned int length;
-  unsigned int max_size;
+struct VectorString {
+  char *raw_data;
+  unsigned int used_len;
+  unsigned int total_cap;
 };
 
-void setup_str(struct DynamicString *ds) {
-  ds->max_size = 4;
-  ds->length = 0;
-  ds->text_ptr = malloc(4);
+void init_vector(struct VectorString *vs) {
+  vs->total_cap = 4;
+  vs->used_len = 0;
+  vs->raw_data = malloc(4);
 }
 
-void release_str(struct DynamicString *ds) { 
-  free(ds->text_ptr); 
+void destroy_vector(struct VectorString *vs) { 
+  free(vs->raw_data); 
 }
 
-void add_item(struct DynamicString *ds, char symbol) {
-  if (ds->length == ds->max_size) {
-    ds->max_size *= 2;
-    char *resized_area = malloc(ds->max_size);
+void push_char(struct VectorString *vs, char val) {
+  if (vs->used_len == vs->total_cap) {
+    vs->total_cap *= 2;
+    char *new_buffer = malloc(vs->total_cap);
 
-    for (unsigned int k = 0; k < ds->length; k++) {
-      resized_area[k] = ds->text_ptr[k];
+    for (unsigned int m = 0; m < vs->used_len; m++) {
+      new_buffer[m] = vs->raw_data[m];
     }
 
-    free(ds->text_ptr);
-    ds->text_ptr = resized_area;
+    free(vs->raw_data);
+    vs->raw_data = new_buffer;
   }
 
-  ds->text_ptr[ds->length] = symbol;
-  ds->length++;
+  vs->raw_data[vs->used_len] = val;
+  vs->used_len++;
 }
 
-void wipe_str(struct DynamicString *ds) { 
-  ds->length = 0; 
+void clear_vector(struct VectorString *vs) { 
+  vs->used_len = 0; 
 }
 
 /* Updated to print just the raw string content */
-void display_str(struct DynamicString *ds) {
-  for (unsigned int k = 0; k < ds->length; k++) {
-    printf("%c", ds->text_ptr[k]);
+void print_raw(struct VectorString *vs) {
+  for (unsigned int m = 0; m < vs->used_len; m++) {
+    printf("%c", vs->raw_data[m]);
   }
   printf("\n");
 }
 
 /* Updated to match your specific multi-line requirement */
-void show_info(struct DynamicString *ds) {
+void debug_dump(struct VectorString *vs) {
   printf("String: \"");
-  for (unsigned int k = 0; k < ds->length; k++) {
-    printf("%c", ds->text_ptr[k]);
+  for (unsigned int m = 0; m < vs->used_len; m++) {
+    printf("%c", vs->raw_data[m]);
   }
   printf("\"\n");
-  printf("Length: %u\n", ds->length);
-  printf("Capacity: %u\n", ds->max_size);
+  printf("Length: %u\n", vs->used_len);
+  printf("Capacity: %u\n", vs->total_cap);
 }
 
-void replicate(struct DynamicString *target, struct DynamicString *origin) {
-  wipe_str(target);
-  for (unsigned int k = 0; k < origin->length; k++) {
-    add_item(target, origin->text_ptr[k]);
+void copy_vector(struct VectorString *dest, struct VectorString *src) {
+  clear_vector(dest);
+  for (unsigned int m = 0; m < src->used_len; m++) {
+    push_char(dest, src->raw_data[m]);
   }
 }
 
-void join_str(struct DynamicString *out, struct DynamicString *p1, struct DynamicString *p2) {
-  struct DynamicString buffer;
-  setup_str(&buffer);
+void concat_vectors(struct VectorString *result, struct VectorString *left, struct VectorString *right) {
+  struct VectorString temp_storage;
+  init_vector(&temp_storage);
 
-  for (unsigned int k = 0; k < p1->length; k++) {
-    add_item(&buffer, p1->text_ptr[k]);
+  for (unsigned int m = 0; m < left->used_len; m++) {
+    push_char(&temp_storage, left->raw_data[m]);
   }
 
-  for (unsigned int k = 0; k < p2->length; k++) {
-    add_item(&buffer, p2->text_ptr[k]);
+  for (unsigned int m = 0; m < right->used_len; m++) {
+    push_char(&temp_storage, right->raw_data[m]);
   }
 
-  free(out->text_ptr);
-  out->text_ptr = buffer.text_ptr;
-  out->length = buffer.length;
-  out->max_size = buffer.max_size;
+  free(result->raw_data);
+  result->raw_data = temp_storage.raw_data;
+  result->used_len = temp_storage.used_len;
+  result->total_cap = temp_storage.total_cap;
 }
 
 int main() {
-  struct DynamicString str_a, str_b, str_c, str_d;
+  struct VectorString vec_1, vec_2, vec_3, vec_4;
 
-  setup_str(&str_a);
-  setup_str(&str_b);
-  setup_str(&str_c);
-  setup_str(&str_d);
+  init_vector(&vec_1);
+  init_vector(&vec_2);
+  init_vector(&vec_3);
+  init_vector(&vec_4);
 
-  char op_code;
+  char command;
 
   while (1) {
-    if (scanf(" %c", &op_code) != 1) {
+    if (scanf(" %c", &command) != 1) {
       break;
     }
 
-    if (op_code == 'q') {
+    if (command == 'q') {
       break;
     }
 
-    if (op_code == 'r' || op_code == 'a') {
-      char target_id;
-      scanf(" %c", &target_id);
+    if (command == 'r' || command == 'a') {
+      char selector;
+      scanf(" %c", &selector);
 
-      struct DynamicString *active_ptr;
+      struct VectorString *current_vec;
 
-      if (target_id == 'a') active_ptr = &str_a;
-      else if (target_id == 'b') active_ptr = &str_b;
-      else if (target_id == 'c') active_ptr = &str_c;
-      else active_ptr = &str_d;
+      if (selector == 'a') current_vec = &vec_1;
+      else if (selector == 'b') current_vec = &vec_2;
+      else if (selector == 'c') current_vec = &vec_3;
+      else current_vec = &vec_4;
 
-      int lookahead;
-      while ((lookahead = getchar()) != EOF) {
-        if (lookahead != ' ' && lookahead != '\t' && lookahead != '\n' && lookahead != '\r') {
+      int next_char;
+      while ((next_char = getchar()) != EOF) {
+        if (next_char != ' ' && next_char != '\t' && next_char != '\n' && next_char != '\r') {
           break;
         }
       }
 
-      if (lookahead == '"') {
-        if (op_code == 'r') wipe_str(active_ptr);
-        int stream_char;
-        while ((stream_char = getchar()) != EOF) {
-          if (stream_char == '"') break;
-          add_item(active_ptr, stream_char);
+      if (next_char == '"') {
+        if (command == 'r') clear_vector(current_vec);
+        int input_byte;
+        while ((input_byte = getchar()) != EOF) {
+          if (input_byte == '"') break;
+          push_char(current_vec, input_byte);
         }
-      } else if (lookahead != EOF) {
-        if (op_code == 'r') wipe_str(active_ptr);
-        add_item(active_ptr, lookahead);
-        int stream_char;
-        while ((stream_char = getchar()) != EOF) {
-          if (stream_char == ' ' || stream_char == '\t' || stream_char == '\n' || stream_char == '\r')
+      } else if (next_char != EOF) {
+        if (command == 'r') clear_vector(current_vec);
+        push_char(current_vec, next_char);
+        int input_byte;
+        while ((input_byte = getchar()) != EOF) {
+          if (input_byte == ' ' || input_byte == '\t' || input_byte == '\n' || input_byte == '\r')
             break;
-          add_item(active_ptr, stream_char);
+          push_char(current_vec, input_byte);
         }
       }
     }
 
-    else if (op_code == 'p') {
-      char target_id;
-      scanf(" %c", &target_id);
+    else if (command == 'p') {
+      char selector;
+      scanf(" %c", &selector);
 
-      if (target_id == 'a') display_str(&str_a);
-      else if (target_id == 'b') display_str(&str_b);
-      else if (target_id == 'c') display_str(&str_c);
-      else display_str(&str_d);
+      if (selector == 'a') print_raw(&vec_1);
+      else if (selector == 'b') print_raw(&vec_2);
+      else if (selector == 'c') print_raw(&vec_3);
+      else print_raw(&vec_4);
     }
 
-    else if (op_code == 'd') {
-      char target_id;
-      scanf(" %c", &target_id);
+    else if (command == 'd') {
+      char selector;
+      scanf(" %c", &selector);
 
-      if (target_id == 'a') show_info(&str_a);
-      else if (target_id == 'b') show_info(&str_b);
-      else if (target_id == 'c') show_info(&str_c);
-      else show_info(&str_d);
+      if (selector == 'a') debug_dump(&vec_1);
+      else if (selector == 'b') debug_dump(&vec_2);
+      else if (selector == 'c') debug_dump(&vec_3);
+      else debug_dump(&vec_4);
     }
 
-    else if (op_code == 'c') {
-      char id1, id2, id3;
-      scanf(" %c %c %c", &id1, &id2, &id3);
+    else if (command == 'c') {
+      char key1, key2, key3;
+      scanf(" %c %c %c", &key1, &key2, &key3);
 
-      struct DynamicString *out_ptr, *src1, *src2;
+      struct VectorString *target, *source_a, *source_b;
 
-      if (id1 == 'a') out_ptr = &str_a;
-      else if (id1 == 'b') out_ptr = &str_b;
-      else if (id1 == 'c') out_ptr = &str_c;
-      else out_ptr = &str_d;
+      if (key1 == 'a') target = &vec_1;
+      else if (key1 == 'b') target = &vec_2;
+      else if (key1 == 'c') target = &vec_3;
+      else target = &vec_4;
 
-      if (id2 == 'a') src1 = &str_a;
-      else if (id2 == 'b') src1 = &str_b;
-      else if (id2 == 'c') src1 = &str_c;
-      else src1 = &str_d;
+      if (key2 == 'a') source_a = &vec_1;
+      else if (key2 == 'b') source_a = &vec_2;
+      else if (key2 == 'c') source_a = &vec_3;
+      else source_a = &vec_4;
 
-      if (id3 == 'a') src2 = &str_a;
-      else if (id3 == 'b') src2 = &str_b;
-      else if (id3 == 'c') src2 = &str_c;
-      else src2 = &str_d;
+      if (key3 == 'a') source_b = &vec_1;
+      else if (key3 == 'b') source_b = &vec_2;
+      else if (key3 == 'c') source_b = &vec_3;
+      else source_b = &vec_4;
 
-      join_str(out_ptr, src1, src2);
+      concat_vectors(target, source_a, source_b);
     }
   }
 
-  release_str(&str_a);
-  release_str(&str_b);
-  release_str(&str_c);
-  release_str(&str_d);
+  destroy_vector(&vec_1);
+  destroy_vector(&vec_2);
+  destroy_vector(&vec_3);
+  destroy_vector(&vec_4);
 
   return 0;
 }
