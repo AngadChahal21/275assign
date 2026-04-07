@@ -1,2 +1,0 @@
-wcTest1
-wcTest2
