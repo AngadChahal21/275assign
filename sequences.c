@@ -2,56 +2,128 @@
 #include <stdlib.h>
 #include <string.h>
 
-int main(int argc, char *argv[]){
-    int initial = atoi(argv[1]);
+//Linked list node structure    
+struct operationPair {
+    char operator;  // maps: 1=add, 2=sub, 3=mul, 4=div
+    int operand; // the integer value following the operator 
+    struct operationPair *next; //pointer to next node 
+};
 
-    //array of operators 
-    int size = 4;
-    char **operator = malloc(size * sizeof(char *));
-    int len = 0;
+//Main linked list structure 
+struct head {
+    int len;
+    struct operationPair *head; // pointer to first node 
+};
 
-    //array of operands
-    int size2 = 4;
-    int *opearands = malloc(size2 * sizeof(int));
-    int len2 = 0;
 
-    char next[50] = '';
-    
-    while(scanf("%s", next) == 1){
+void appendOperation(struct head *list, char operator, int operand) {
+    struct operationPair *node = malloc(sizeof(struct operationPair));
+    node->next = NULL;
+    node->operator = operator;
+    node->operand = operand;
 
-        if(strcmp(next, "n") == 0){
-            //apply all operations to current, print on newline
-        }
-        
-        else {
-            operator[len] = next;
-            int operation = 0;
-            operation = scanf(%d, operation);
-            operands[len2] = operation;
-            len++;
-            len2++;
-        }
-
-        if(len == size){
-            
-            char **new_op = malloc((size*2) * sizeof(char *));
-            for(int i = 0; i < size; i++){
-                new_op[i] = operator[i];
-            }
-            size = size*2;
-            free(operator);
-            operator = new_op;
-
-            int *new_operands = malloc((size2*2) * sizeof(int));
-            for(int i = 0; i < size2; i++){
-                new_operands[i] = operands[i];
-            }
-            size2 = size2*2;
-            free(operands);
-            operands = new_operands;
-        }
-
+    // if this is the first node and the list is empty
+    if (list->head == NULL) {
+        list->head = node;
+        list->len = 1;
     }
 
+    //if the list already has elements
+    else {
+        struct operationPair *currentNode = list->head;
+        while (currentNode->next != NULL) currentNode = currentNode->next;
+        currentNode->next = node;
+        list->len += 1;
+    }
+}
 
+int applyOperations(struct head *list, int startValue) {
+    int result = startValue;
+    struct operationPair *currentNode = list->head;
+
+    for (int i = 0; i < list->len; i++, currentNode = currentNode->next) {
+        if (currentNode->operator == 1){
+            result = result + currentNode->operand;
+        }      
+        else if (currentNode->operator == 2){
+            result = result - currentNode->operand;
+        }
+        else if (currentNode->operator == 3){
+            result = result * currentNode->operand;
+        }
+        else{
+            result = result/currentNode->operand;
+        }
+    }
+    return result;
+}
+
+//cleaning node by recursion
+void freeOperationNodes(struct operationPair *node) {
+    if (!node){
+        return;
+    }
+    freeOperationNodes(node->next);
+    free(node);
+}
+
+void freeOperationList(struct head *list) {
+    if (!list){
+        return;
+    }
+    freeOperationNodes(list->head);
+    free(list);
+}
+
+// maps operator string to numerical codes for easier types 
+char mapOperationCode(const char *operatorString) {
+    if (strcmp(operatorString, "add") == 0){
+        return 1;
+    }
+    if (strcmp(operatorString, "sub") == 0){
+        return 2;
+    }
+    if (strcmp(operatorString, "mul") == 0){
+        return 3;
+    }
+    if (strcmp(operatorString, "div") == 0){
+        return 4;
+    }
+    return 0;
+}
+
+int main(int argc, char **argv) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s N", argv[0]);
+        return 1; //error 
+    }
+
+    int initial = atoi(*(argv + 1));
+
+    struct head *list = malloc(sizeof(struct head));
+    if (!list){
+        return 1;
+    }
+    list->head = NULL;
+    list->len = 0;
+
+    char command[10];
+    int operand;
+
+    while (scanf("%9s", command) != EOF) {
+        //operators are given
+        if (strcmp(command, "n") != 0) {
+            char operationCode = mapOperationCode(command);
+            //second scanf to immediately pick the operand as well 
+            if (scanf("%d", &operand) == 1 && operationCode != 0) {
+                appendOperation(list, operationCode, operand);
+            }
+        } else { // n is given
+            initial = applyOperations(list, initial);
+            printf("%d\n", initial);
+        }
+    }
+
+    freeOperationList(list);
+    return 0;
 }
