@@ -5,8 +5,6 @@ class intSet {
   int *data;
   int size;
   int capacity;
-  int indexOf(int e) const; //extra helper
-  void swap(intSet& other); //extra helper
  public:
   intSet(); // default constructor
   intSet(const intSet& is); // copy constructor
