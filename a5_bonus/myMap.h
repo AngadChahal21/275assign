@@ -6,49 +6,26 @@
 
 template <typename K, typename V>
 class Map {
-  //private 
+  private:
   std::vector<std::pair<K, V>> entries;
 
-  //helper #1
-  int findKeyIndex(const K& key) const{
+  //helper
+  std::size_t findIndex(const K& key) const{
     //binary search
-    int left = 0;
-    int right = (int)entries.size();
+    std::size_t left = 0;
+    std::size_t right = entries.size();
 
     while(left < right){
-      int mid = (left + right)/2;
-      if (!(entries[mid].first < key) && !(key < entries[mid].first)) {
-        return mid;
-      }
-      else if(entries[mid].first < key){
+      std::size_t mid = left + (right - left)/2;
+
+      if(entries[mid].first < key){
         left = mid + 1;
       }
       else{
         right = mid;
       }
     }
-    return -1; // not found 
-  }
-
-  //helper #2
-  int findInsertIndex(const K& key) const{
-    //binary search
-    int left = 0;
-    int right = (int)entries.size();
-
-    while(left < right){
-      int mid = (left + right)/2;
-      if (!(entries[mid].first < key) && !(key < entries[mid].first)) {
-        return mid;
-      }
-      else if(entries[mid].first < key){
-        left = mid + 1;
-      }
-      else{
-        right = mid;
-      }
-    }
-    return left; //position where key should be inserted
+    return left;
   }
 
   //public
@@ -66,40 +43,48 @@ class Map {
 
   //operator overloading: 
   V& operator[](const K& key){
-    int index = findKeyIndex(key);
+    std::size_t index = findIndex(key);
 
-    if(index != -1){
-      return entries[index].second;
+    //if key exists
+    if (index < entries.size() &&
+        !(entries[index].first < key) &&
+        !(key < entries[index].first)) {
+        return entries[index].second;
     }
 
-    int insertIndex = findInsertIndex(key);
-    entries.insert(entries.begin() + insertIndex, std::pair<K,V>(key, V{}));
-    return entries[insertIndex].second;
+    //otherwise
+    entries.insert(entries.begin() + index, std::pair<K,V>(key, V{}));
+    return entries[index].second;
 
   }
-  V operator()(const K& key) const{
-    int index = findKeyIndex(key);
 
-    if(index != -1){
-      return entries[index].second; 
+  V operator()(const K& key) const{
+    std::size_t index = findIndex(key);
+
+    //if key exists
+    if (index < entries.size() &&
+        !(entries[index].first < key) &&
+        !(key < entries[index].first)) {
+        return entries[index].second;
     }
 
+    //otherwise
     return V{};
   }
 
   class Iterator {
    private:
-    const std::vector<std::pair<K, V>>* entriesPtr;
-    unsigned long index;
+    const Map* mPtr;
+    std::size_t index;
 
    public:
    //default ctor
-    Iterator(const std::vector<std::pair<K, V>>* entriesPtr, unsigned long index) :
-    entriesPtr{entriesPtr}, index{index} {}
+    Iterator(const Map* map, std::size_t index) :
+    mPtr{map}, index{index} {}
 
     //isEqual check
     bool operator!=(const Iterator& other) const{
-      return entriesPtr != other.entriesPtr || index != other.index; 
+      return mPtr != other.mPtr || index != other.index; 
     }
 
     //iterate 
@@ -110,15 +95,15 @@ class Map {
 
     //dereference
     const K& operator*() const{
-      return (*entriesPtr)[index].first;
+      return mPtr->entries[index].first;
     }
   };
 
   Iterator begin() const{
-    return Iterator(&entries, 0);
+    return Iterator(this, 0);
   }
   Iterator end() const{
-    return Iterator(&entries, entries.size());
+    return Iterator(this, entries.size());
   }
 };
 
