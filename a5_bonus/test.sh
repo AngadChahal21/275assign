@@ -15,6 +15,11 @@ if [ $? -ne 0 ]; then
 fi
 echo -e "${GREEN}Compilation successful!${NC}\n"
 
+# Generate extensive tests
+echo -e "${YELLOW}Generating extensive tests...${NC}"
+chmod +x generate_tests.sh
+./generate_tests.sh
+
 # Array of all types
 types=("int" "str" "float")
 
@@ -28,7 +33,6 @@ for key in "${types[@]}"; do
     
     execName="${key}To${valCap}"
     sampleExec="samples/${execName}Sample"
-    testInput="samples/${execName}SimpleTest.in"
 
     if [ ! -f "${execName}" ]; then
       echo -e "${RED}Executable ${execName} not found.${NC}"
@@ -45,36 +49,41 @@ for key in "${types[@]}"; do
 
     echo -e "${YELLOW}--- Testing ${execName} ---${NC}"
 
-    # 1. Test correctness
-    ./${sampleExec} < ${testInput} > sample_out.txt 2> sample_err.txt
-    ./${execName} < ${testInput} > my_out.txt 2> my_err.txt
+    # Loop through all test files for this executable
+    for testInput in samples/${execName}*.in; do
+      testName=$(basename "$testInput")
+      echo -e "  Running ${testName}..."
 
-    diff -q sample_out.txt my_out.txt > /dev/null
-    if [ $? -eq 0 ]; then
-      echo -e "  [${GREEN}PASS${NC}] Output matches sample"
-    else
-      echo -e "  [${RED}FAIL${NC}] Output differs from sample!"
-      echo -e "  ${YELLOW}Sample output:${NC}"
-      cat sample_out.txt
-      echo -e "  ${YELLOW}Your output:${NC}"
-      cat my_out.txt
-      all_passed=false
-    fi
+      # 1. Test correctness
+      ./${sampleExec} < "${testInput}" > sample_out.txt 2> sample_err.txt
+      ./${execName} < "${testInput}" > my_out.txt 2> my_err.txt
 
-    # 2. Test memory leaks using valgrind
-    if command -v valgrind &> /dev/null; then
-      valgrind --leak-check=full --error-exitcode=1 ./${execName} < ${testInput} > /dev/null 2> valgrind_err.txt
+      diff -q sample_out.txt my_out.txt > /dev/null
       if [ $? -eq 0 ]; then
-        echo -e "  [${GREEN}PASS${NC}] Valgrind memory check"
+        echo -e "    [${GREEN}PASS${NC}] Output matches sample"
       else
-        echo -e "  [${RED}FAIL${NC}] Memory leak or error detected!"
-        cat valgrind_err.txt
+        echo -e "    [${RED}FAIL${NC}] Output differs from sample!"
+        echo -e "    ${YELLOW}Sample output:${NC}"
+        cat sample_out.txt
+        echo -e "    ${YELLOW}Your output:${NC}"
+        cat my_out.txt
         all_passed=false
       fi
-    else
-      echo -e "  [${YELLOW}SKIP${NC}] Valgrind not installed, skipping memory check."
-    fi
 
+      # 2. Test memory leaks using valgrind
+      if command -v valgrind &> /dev/null; then
+        valgrind --leak-check=full --error-exitcode=1 ./${execName} < "${testInput}" > /dev/null 2> valgrind_err.txt
+        if [ $? -eq 0 ]; then
+          echo -e "    [${GREEN}PASS${NC}] Valgrind memory check"
+        else
+          echo -e "    [${RED}FAIL${NC}] Memory leak or error detected!"
+          cat valgrind_err.txt
+          all_passed=false
+        fi
+      else
+        echo -e "    [${YELLOW}SKIP${NC}] Valgrind not installed, skipping memory check."
+      fi
+    done
     echo ""
   done
 done
